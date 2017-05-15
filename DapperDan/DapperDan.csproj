@@ -36,6 +36,7 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.configuration" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data.Entity.Design" />
     <Reference Include="System.Xml.Linq" />
@@ -51,7 +52,10 @@
     <Compile Include="EntityStores\ColumnInfo.cs" />
     <Compile Include="EntityStores\ConnectionInfo.cs" />
     <Compile Include="EntityStores\EntityStore.cs" />
+    <Compile Include="EntityStores\EntityStoreExtensions.cs" />
     <Compile Include="EntityStores\IEntityStore.cs" />
+    <Compile Include="EntityStores\QueryExecution\InsertQueryBuilder.cs" />
+    <Compile Include="EntityStores\QueryExecution\QueryBuilderBase.cs" />
     <Compile Include="EntityStores\QueryExecution\SelectQueryBuilder.cs" />
     <Compile Include="Filtering\ColumnFilter.cs" />
     <Compile Include="Filtering\FilterOperation.cs" />

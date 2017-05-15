@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data.Entity.Design.PluralizationServices;
 using System.Data.SqlClient;
 using System.Globalization;
+using System.Linq;
 using System.Threading.Tasks;
 using Dapper;
 using DapperDan.EntityStores.QueryExecution;
@@ -35,6 +36,29 @@ namespace DapperDan.EntityStores
 
 				return result;
 			}
+		}
+
+		public async Task<TEntity> AddAsync<TEntity>(TEntity newRow) where TEntity : new()
+		{
+			if (newRow == null)
+				return default(TEntity);
+
+			var parameters = new DynamicParameters();
+			var sql = new InsertQueryBuilder(connectionInfo).BuildQuery(newRow, parameters);
+
+			var result = (await GetAsync<TEntity>(sql, parameters)).FirstOrDefault();
+
+			if (result == null)
+				return default(TEntity);
+
+			WithFilter(connectionInfo.KeyColumnName, result.GetType().GetProperty(connectionInfo.KeyColumnName).GetValue(result));
+
+			return (await GetAsync<TEntity>()).FirstOrDefault();
+		}
+
+		public Task<TEntity> UpdateAsync<TEntity>(TEntity toUpdate)
+		{
+			return Task.FromResult(toUpdate);
 		}
 
 		private void EnsureConnectionString()

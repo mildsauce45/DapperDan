@@ -1,11 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using DapperDan.Attributes;
-using System.Reflection;
 using System.ComponentModel.DataAnnotations;
+using System.Reflection;
+using DapperDan.Attributes;
 
 namespace DapperDan.EntityStores
 {
@@ -16,9 +13,9 @@ namespace DapperDan.EntityStores
 
 		public IEnumerable<ColumnInfo> Columns { get; private set; }
 
-		private string keyColumnName;
+		internal string KeyColumnName { get; private set; }
 
-		public ConnectionInfo()
+		internal ConnectionInfo()
 		{
 		}
 
@@ -60,7 +57,7 @@ namespace DapperDan.EntityStores
 				if (keyAttr != null || string.Equals("Id", entityName, StringComparison.CurrentCultureIgnoreCase) || string.Equals("Guid", entityName, StringComparison.CurrentCultureIgnoreCase))
 				{
 					queryTypes = QueryTypes.Read;
-					keyColumnName = entityName;
+					KeyColumnName = entityName;
 				}
 
 				columns.Add(new ColumnInfo(entityName, alias, queryTypes));

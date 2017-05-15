@@ -7,45 +7,33 @@ using DapperDan.Filtering;
 
 namespace DapperDan.EntityStores.QueryExecution
 {
-	internal class SelectQueryBuilder
+	internal class SelectQueryBuilder : QueryBuilderBase
 	{
-		private ConnectionInfo connectionInfo;
 		private IEnumerable<ColumnFilter> filters;
 
 		internal SelectQueryBuilder(ConnectionInfo connectionInfo, IEnumerable<ColumnFilter> filters)
+			: base(connectionInfo)
 		{
-			this.connectionInfo = connectionInfo;
 			this.filters = filters;
 		}
 
 		public string BuildQuery(DynamicParameters parameters)
 		{
-			var baseClause = $"select {GetSelectableColumns(connectionInfo.Columns, QueryTypes.Read)} from {connectionInfo.TableName}";
+			var baseClause = $"select {GetSelectableColumns(ConnectionInfo.Columns)} from {ConnectionInfo.TableName}";
 			string filterClause = string.Empty;
 
 			if (filters != null && filters.Any())
-				filterClause = BuildFilterClause(filters, connectionInfo.Columns, parameters);
+				filterClause = BuildFilterClause(filters, ConnectionInfo.Columns, parameters);
 
 			return baseClause + filterClause;
 		}
 
-		private string GetSelectableColumns(IEnumerable<ColumnInfo> columns, QueryTypes queryType)
+		private string GetSelectableColumns(IEnumerable<ColumnInfo> columns)
 		{
 			if (columns == null || !columns.Any())
 				return "*";
 
-			var toSelect = new List<string>();
-
-			foreach (var ci in columns)
-			{
-				// If this column shouldn't be used for this type fo query, ignore it
-				if ((ci.QueryTypes | queryType) == 0)
-					continue;
-
-				toSelect.Add(ci.DbColumnName != null ? $"{ci.DbColumnName} as {ci.EntityName}" : ci.EntityName);
-			}
-
-			return string.Join(",", toSelect);
+			return string.Join(",", GetColumnsForOperation(QueryTypes.Read).Select(ci => ci.DbColumnName != null ? $"{ci.DbColumnName} as {ci.EntityName}" : ci.EntityName));
 		}
 
 		private string BuildFilterClause(IEnumerable<ColumnFilter> filters, IEnumerable<ColumnInfo> columns, DynamicParameters parameters)
