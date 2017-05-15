@@ -11,11 +11,12 @@ namespace DapperDan.Tests.Models
 
 		public string UserName { get; set; }
 
-		[QueryType(QueryTypes.Read)]
+		[QueryType(QueryTypes.Read | QueryTypes.Insert)]
 		public DateTime CreatedDate { get; set; }
 
 		public string FirstName { get; set; }
 
-		public string LastName { get; set; }
+		[Alias("LastName")]
+		public string FamilyName { get; set; }
 	}
 }
