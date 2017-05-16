@@ -57,6 +57,7 @@
     <Compile Include="EntityStores\QueryExecution\InsertQueryBuilder.cs" />
     <Compile Include="EntityStores\QueryExecution\QueryBuilderBase.cs" />
     <Compile Include="EntityStores\QueryExecution\SelectQueryBuilder.cs" />
+    <Compile Include="EntityStores\QueryExecution\UpdateQueryBuilder.cs" />
     <Compile Include="Filtering\ColumnFilter.cs" />
     <Compile Include="Filtering\FilterOperation.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

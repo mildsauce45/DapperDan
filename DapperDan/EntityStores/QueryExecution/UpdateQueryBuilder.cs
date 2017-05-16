@@ -18,9 +18,28 @@ namespace DapperDan.EntityStores.QueryExecution
 		public string BuildQuery(object toUpdate, DynamicParameters parameters)
 		{
 			var columnsForUpdate = GetColumnsForOperation(QueryTypes.Update);
+			
+			var keyColumnName = GetKeyColumnName();
 
-			//var 
-			return string.Empty;
+			var properties = toUpdate.GetType().GetProperties();
+
+			parameters.Add("UPDATE_RECORD_KEY", properties.FirstOrDefault(pi => pi.Name == keyColumnName).GetValue(toUpdate));
+
+			var temp = new List<string>();
+
+			foreach (var cfu in columnsForUpdate)
+			{
+				var pi = properties.FirstOrDefault(p => p.Name == cfu.DbColumnName || p.Name == cfu.EntityName);
+				if (pi == null)
+					continue;
+
+				temp.Add($"{cfu.ResolvedName} = @{cfu.ResolvedName.ToUpper()}");
+				parameters.Add(cfu.ResolvedName.ToUpper(), pi.GetValue(toUpdate));
+			}
+
+			var columnsClause = string.Join(",", temp);
+
+			return $"update {ConnectionInfo.TableName} set {columnsClause} where {keyColumnName} = @UPDATE_RECORD_KEY";
 		}
 	}
 }

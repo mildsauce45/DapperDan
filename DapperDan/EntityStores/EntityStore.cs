@@ -56,9 +56,20 @@ namespace DapperDan.EntityStores
 			return (await GetAsync<TEntity>()).FirstOrDefault();
 		}
 
-		public Task<TEntity> UpdateAsync<TEntity>(TEntity toUpdate)
+		public async Task<TEntity> UpdateAsync<TEntity>(TEntity toUpdate)
 		{
-			return Task.FromResult(toUpdate);
+			if (toUpdate == null)
+				return default(TEntity);
+
+			var parameters = new DynamicParameters();
+			var sql = new UpdateQueryBuilder(connectionInfo).BuildQuery(toUpdate, parameters);
+
+			using (var db = new SqlConnection(connectionInfo.ConnectionString))
+			{
+				await db.ExecuteAsync(sql, parameters);
+			}
+
+			return toUpdate;
 		}
 
 		private void EnsureConnectionString()

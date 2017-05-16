@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using DapperDan.EntityStores;
 using DapperDan.Tests.Models;
@@ -11,8 +12,7 @@ namespace DapperDan.Tests
 		{
 			IEntityStore userStore = new EntityStore()
 				.WithConfigConnection("Core")
-				.WithEntity<User>()
-				.WithFilter(nameof(User.FirstName), "Jared");
+				.WithEntity<User>();				
 
 			var uTask = userStore.GetAsync<User>();
 
@@ -21,6 +21,7 @@ namespace DapperDan.Tests
 			var users = uTask.Result;
 
 			//TestInsertUser();
+			TestUpdateUser(users.FirstOrDefault(u => u.Id == 5));
 			Console.WriteLine("");
 		}
 
@@ -37,6 +38,23 @@ namespace DapperDan.Tests
 				.WithEntity<User>();
 
 			var uTask = userStore.AddAsync(u);
+
+			Task.WaitAll(uTask);
+
+			var newUser = uTask.Result;
+
+			Console.WriteLine("");
+		}
+
+		private static void TestUpdateUser(User u)
+		{
+			u.FamilyName = "Fisher";
+
+			IEntityStore userStore = new EntityStore()
+				.WithConfigConnection("Core")
+				.WithEntity<User>();
+
+			var uTask = userStore.UpdateAsync(u);
 
 			Task.WaitAll(uTask);
 
