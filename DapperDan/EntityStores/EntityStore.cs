@@ -61,6 +61,8 @@ namespace DapperDan.EntityStores
 			if (toUpdate == null)
 				return default(TEntity);
 
+			EnsureConnectionString();
+
 			var parameters = new DynamicParameters();
 			var sql = new UpdateQueryBuilder(connectionInfo).BuildQuery(toUpdate, parameters);
 
@@ -70,6 +72,27 @@ namespace DapperDan.EntityStores
 			}
 
 			return toUpdate;
+		}
+
+		public async Task DeleteAsync<TEntity>(TEntity entity)
+		{
+			if (entity == null)
+				return;
+
+			var entityKey = typeof(TEntity).GetProperty(connectionInfo.KeyColumnName).GetValue(entity);
+
+			await DeleteAsync(entityKey);
+		}
+
+		public async Task DeleteAsync(object entityKey)
+		{
+			var parameters = new DynamicParameters();
+			var sql = new DeleteQueryBuilder(connectionInfo).BuildQuery(entityKey, parameters);
+
+			using (var db = new SqlConnection(connectionInfo.ConnectionString))
+			{
+				await db.ExecuteAsync(sql, parameters);
+			}
 		}
 
 		private void EnsureConnectionString()

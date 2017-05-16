@@ -54,6 +54,7 @@
     <Compile Include="EntityStores\EntityStore.cs" />
     <Compile Include="EntityStores\EntityStoreExtensions.cs" />
     <Compile Include="EntityStores\IEntityStore.cs" />
+    <Compile Include="EntityStores\QueryExecution\DeleteQueryBuilder.cs" />
     <Compile Include="EntityStores\QueryExecution\InsertQueryBuilder.cs" />
     <Compile Include="EntityStores\QueryExecution\QueryBuilderBase.cs" />
     <Compile Include="EntityStores\QueryExecution\SelectQueryBuilder.cs" />

@@ -14,6 +14,9 @@ namespace DapperDan.EntityStores
 
 		Task<TEntity> UpdateAsync<TEntity>(TEntity toUpdate);
 
+		Task DeleteAsync(object entityKey);
+		Task DeleteAsync<TEntity>(TEntity entity);
+
 		IEntityStore WithEntity<TEntity>(string alias = null);
 		IEntityStore WithFilter(string propName, object value, FilterOperation operation = FilterOperation.Equals);
 		IEntityStore WithConnection(string connectionString);		
