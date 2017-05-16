@@ -19,6 +19,8 @@ namespace DapperDan.EntityStores
 
 		IEntityStore WithEntity<TEntity>(string alias = null);
 		IEntityStore WithFilter(string propName, object value, FilterOperation operation = FilterOperation.Equals);
-		IEntityStore WithConnection(string connectionString);		
+		IEntityStore WithConnection(string connectionString);
+		IEntityStore WithSort(string name, SortDirection direction = SortDirection.Ascending);
+		IEntityStore WithPaging(int? skip, int? take);
 	}
 }

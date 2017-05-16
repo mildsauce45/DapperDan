@@ -10,34 +10,72 @@ namespace DapperDan.EntityStores.QueryExecution
 	internal class SelectQueryBuilder : QueryBuilderBase
 	{
 		private IEnumerable<ColumnFilter> filters;
+		private PagingInfo pagingInfo;
 
-		internal SelectQueryBuilder(ConnectionInfo connectionInfo, IEnumerable<ColumnFilter> filters)
+		internal SelectQueryBuilder(ConnectionInfo connectionInfo, IEnumerable<ColumnFilter> filters, PagingInfo pagingInfo)
 			: base(connectionInfo)
 		{
 			this.filters = filters;
+			this.pagingInfo = pagingInfo;
 		}
 
 		public string BuildQuery(DynamicParameters parameters)
 		{
-			var baseClause = $"select {GetSelectableColumns(ConnectionInfo.Columns)} from {ConnectionInfo.TableName}";
-			string filterClause = string.Empty;
+			string orderByClause = string.Empty;
 
-			if (filters != null && filters.Any())
-				filterClause = BuildFilterClause(filters, ConnectionInfo.Columns, parameters);
+			if ((pagingInfo?.Sorts.Any()).GetValueOrDefault())
+				orderByClause = BuildOrderByClause();
 
-			return baseClause + filterClause;
+			if (pagingInfo != null && pagingInfo.Skip.GetValueOrDefault() > 0 && pagingInfo.Take.HasValue)
+			{
+				var skipTakePredicate = BuildSkipTakePredicate();
+				var orderedSetName = $"Ordered{ConnectionInfo.TableName}";
+				var originalSetName = $"Orig{ConnectionInfo.TableName}";
+
+				return string.Format("select {0} from (select {1}, row_number() over ({2}) as RowNumber from (select {1} from {3} {4}) as {5}) as {6} where {7}",
+					GetSelectableColumns(),
+					GetSelectableColumns(false),
+					orderByClause,
+					ConnectionInfo.TableName,
+					BuildPredicate(filters, ConnectionInfo.Columns, parameters),
+					orderedSetName,
+					orderedSetName,
+					skipTakePredicate);
+			}
+			else
+			{
+				return string.Format("select {0} {1} from {2} {3} {4}",
+					pagingInfo != null && pagingInfo.Take.HasValue ? $"top {pagingInfo.Take}" : string.Empty,
+					GetSelectableColumns(),
+					ConnectionInfo.TableName,
+					BuildPredicate(filters, ConnectionInfo.Columns, parameters),
+					orderByClause);
+			}
 		}
 
-		private string GetSelectableColumns(IEnumerable<ColumnInfo> columns)
+		private string GetSelectableColumns(bool useAlias = true)
 		{
-			if (columns == null || !columns.Any())
+			if (ConnectionInfo.Columns == null || !ConnectionInfo.Columns.Any())
 				return "*";
 
-			return string.Join(",", GetColumnsForOperation(QueryTypes.Read).Select(ci => ci.DbColumnName != null ? $"{ci.DbColumnName} as {ci.EntityName}" : ci.EntityName));
+			var columns = new List<string>();
+
+			foreach (var ci in GetColumnsForOperation(QueryTypes.Read))
+			{
+				if (ci.DbColumnName != null)
+					columns.Add($"{ci.DbColumnName} {(useAlias ? "as " + ci.EntityName : ci.DbColumnName)}".Trim());
+				else
+					columns.Add(ci.EntityName);
+			}
+
+			return string.Join(",", columns);
 		}
 
-		private string BuildFilterClause(IEnumerable<ColumnFilter> filters, IEnumerable<ColumnInfo> columns, DynamicParameters parameters)
+		private string BuildPredicate(IEnumerable<ColumnFilter> filters, IEnumerable<ColumnInfo> columns, DynamicParameters parameters)
 		{
+			if (filters == null || !filters.Any())
+				return string.Empty;
+
 			var filterStrs = new List<string>();
 
 			foreach (var filter in filters)
@@ -51,6 +89,21 @@ namespace DapperDan.EntityStores.QueryExecution
 			}
 
 			return $" where {string.Join(" and ", filterStrs)}";
+		}
+
+		private string BuildOrderByClause()
+		{
+			return $" order by {string.Join(",", pagingInfo.Sorts.Select(s => string.Format("{0} {1}", s.Item1, s.Item2 == SortDirection.Descending ? "desc" : string.Empty).Trim()))}";
+		}
+
+		private string BuildSkipTakePredicate()
+		{
+			var skip = pagingInfo.Skip.Value;
+			var take = pagingInfo.Take.Value;
+
+			var maxRow = take + skip;
+
+			return $" RowNumber > {skip} and RowNumber <= {maxRow}";
 		}
 
 		private string GetStringOperation(FilterOperation operation)

@@ -15,11 +15,12 @@ namespace DapperDan.EntityStores
 	{
 		private ConnectionInfo connectionInfo;
 		private IList<ColumnFilter> filters;
+		private PagingInfo pagingInfo;
 
 		public async Task<IEnumerable<TEntity>> GetAsync<TEntity>()
 		{
 			var parameters = new DynamicParameters();
-			var sql = new SelectQueryBuilder(connectionInfo, filters).BuildQuery(parameters);
+			var sql = new SelectQueryBuilder(connectionInfo, filters, pagingInfo).BuildQuery(parameters);
 
 			return await GetAsync<TEntity>(sql, parameters);
 		}
@@ -32,10 +33,19 @@ namespace DapperDan.EntityStores
 			{
 				parameters = parameters ?? new DynamicParameters();
 
-				var result = await db.QueryAsync<TEntity>(sql, parameters);
+				try
+				{
+					var result = await db.QueryAsync<TEntity>(sql, parameters);
 
-				return result;
+					return result;
+				}
+				catch (Exception e)
+				{
+					Console.WriteLine(e.Message);
+				}
 			}
+
+			return Enumerable.Empty<TEntity>();
 		}
 
 		public async Task<TEntity> AddAsync<TEntity>(TEntity newRow) where TEntity : new()
@@ -126,6 +136,18 @@ namespace DapperDan.EntityStores
 
 			filters.Add(new ColumnFilter(propName, value, operation));
 
+			return this;
+		}
+
+		public IEntityStore WithSort(string propName, SortDirection direction = SortDirection.Ascending)
+		{
+			pagingInfo = (pagingInfo ?? new PagingInfo()).WithSort(propName, direction);
+			return this;
+		}
+
+		public IEntityStore WithPaging(int? skip, int? take)
+		{
+			pagingInfo = (pagingInfo ?? new PagingInfo()).WithSkip(skip).WithTake(take);
 			return this;
 		}
 
