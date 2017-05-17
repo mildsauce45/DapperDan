@@ -14,11 +14,11 @@ namespace DapperDan.Tests.SQLServer
 		[Fact]
 		public async Task TestEqualsFilter()
 		{
-			var users = await CreateTestStore().WithFilter(nameof(User.FirstName), "Jared").GetAsync<User>();
+			var users = await CreateTestStore().WithFilter(nameof(User.FirstName), "Jared").GetAsync();
 
 			users.Should().HaveCount(1, "theres only one record with the first name of Jared");
 
-			users = await CreateTestStore().WithFilter(nameof(User.Id), 0).GetAsync<User>();
+			users = await CreateTestStore().WithFilter(nameof(User.Id), 0).GetAsync();
 
 			users.Should().HaveCount(0, "the users table should never have a record with 0 as the id");
 		}
@@ -26,11 +26,11 @@ namespace DapperDan.Tests.SQLServer
 		[Fact]
 		public async Task TestLessThanFilter()
 		{
-			var users = await CreateTestStore().WithFilter(nameof(User.Id), 7, FilterOperation.LessThan).GetAsync<User>();
+			var users = await CreateTestStore().WithFilter(nameof(User.Id), 7, FilterOperation.LessThan).GetAsync();
 
 			users.Should().HaveCount(2, "there are two records with an Id less than 7");
 
-			users = await CreateTestStore().WithFilter(nameof(User.CreatedDate), new DateTime(2017, 5, 16), FilterOperation.LessThan).GetAsync<User>();
+			users = await CreateTestStore().WithFilter(nameof(User.CreatedDate), new DateTime(2017, 5, 16), FilterOperation.LessThan).GetAsync();
 
 			users.Should().HaveCount(1, "only the mildsauce45 record was created before this date");
 		}
@@ -40,14 +40,14 @@ namespace DapperDan.Tests.SQLServer
 		{
 			var store = CreateTestStore();
 
-			var allUsers = await store.GetAsync<User>();
+			var allUsers = await store.GetAsync();
 
-			var users = await store.WithFilter(nameof(User.CreatedDate), new DateTime(2017, 5, 16), FilterOperation.GreaterThan).GetAsync<User>();
+			var users = await store.WithFilter(nameof(User.CreatedDate), new DateTime(2017, 5, 16), FilterOperation.GreaterThan).GetAsync();
 
 			users.Should().HaveCount(allUsers.Count() - 1, "only one record was created before this time");
 		}
 
-		private IEntityStore CreateTestStore() =>
-			new EntityStore().WithConfigConnection("Core").WithEntity<User>();
+		private EntityStore<User> CreateTestStore() =>
+			new EntityStore<User>().WithConfigConnection("Core");
 	}
 }

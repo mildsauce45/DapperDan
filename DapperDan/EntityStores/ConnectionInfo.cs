@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Data.Entity.Design.PluralizationServices;
+using System.Globalization;
 using System.Reflection;
 using DapperDan.Attributes;
 
@@ -19,21 +21,23 @@ namespace DapperDan.EntityStores
 		{
 		}
 
-		public ConnectionInfo WithConnection(string connectionString)
+		internal ConnectionInfo WithConnection(string connectionString)
 		{
 			ConnectionString = connectionString;
 			return this;
 		}
 
-		public ConnectionInfo WithTableName(string tableName)
+		internal ConnectionInfo WithTableName(string tableName)
 		{
 			TableName = tableName;
 			return this;
 		}
 
-		public ConnectionInfo WithEntity<TEntity>()
+		internal ConnectionInfo WithEntity<TEntity>()
 		{
 			var et = typeof(TEntity);
+
+			TableName = PluralizationService.CreateService(CultureInfo.CurrentCulture).Pluralize(et.Name);
 
 			var properties = et.GetProperties();
 

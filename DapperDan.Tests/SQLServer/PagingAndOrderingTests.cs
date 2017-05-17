@@ -12,13 +12,13 @@ namespace DapperDan.Tests.SQLServer
 		[Fact]
 		public async Task TestOrdering()
 		{
-			var users = await CreateTestStore().WithSort(nameof(User.UserName)).GetAsync<User>();
+			var users = await CreateTestStore().WithSort(nameof(User.UserName)).GetAsync();
 
 			users.Should().HaveCount(2);
 			users.First().UserName.ShouldBeEquivalentTo("jdarkmagic", "because j comes before m");
 			users.ElementAt(1).UserName.ShouldBeEquivalentTo("mildsauce45", "because m comes after j");
 
-			users = await CreateTestStore().WithSort(nameof(User.UserName), SortDirection.Descending).GetAsync<User>();
+			users = await CreateTestStore().WithSort(nameof(User.UserName), SortDirection.Descending).GetAsync();
 
 			users.Should().HaveCount(2);
 			users.First().UserName.ShouldBeEquivalentTo("mildsauce45", "because m comes before j when sorting descending");
@@ -28,7 +28,7 @@ namespace DapperDan.Tests.SQLServer
 		[Fact]
 		public async Task TestSortingAliasedColumn()
 		{
-			var users = await CreateTestStore().WithSort(nameof(User.FamilyName)).GetAsync<User>();
+			var users = await CreateTestStore().WithSort(nameof(User.FamilyName)).GetAsync();
 
 			users.Should().HaveCount(2);
 			users.First().FamilyName.ShouldBeEquivalentTo("Darkmagic", "because d comes before p");
@@ -37,14 +37,14 @@ namespace DapperDan.Tests.SQLServer
 		[Fact]
 		public async Task TestPaging()
 		{
-			var users = await CreateTestStore().WithSort(nameof(User.UserName)).WithPaging(1, 1).GetAsync<User>();
+			var users = await CreateTestStore().WithSort(nameof(User.UserName)).WithPaging(1, 1).GetAsync();
 
 			users.Should().HaveCount(1);
 			users.First().UserName.ShouldBeEquivalentTo("mildsauce45", "because our page size of 1 skips over jdarkmagic");
 			users.First().FamilyName.ShouldBeEquivalentTo("Pinchot", "because the aliasing should still work");
 		}
 
-		private IEntityStore CreateTestStore() =>
-			new EntityStore().WithConfigConnection("Core").WithEntity<User>();
+		private EntityStore<User> CreateTestStore() =>
+			new EntityStore<User>().WithConfigConnection("Core");
 	}
 }

@@ -13,7 +13,7 @@ namespace DapperDan.Tests.SQLServer
 		[Fact]
 		public async Task TestGetNoFilter()
 		{
-			var users = await CreateTestStore().GetAsync<User>();
+			var users = await CreateTestStore().GetAsync();
 
 			users.Should().HaveCount(2);
 		}
@@ -21,7 +21,7 @@ namespace DapperDan.Tests.SQLServer
 		[Fact]
 		public async Task TestGetUsersWithFilter()
 		{
-			var users = await CreateTestStore().WithFilter(nameof(User.FirstName), "Jared").GetAsync<User>();
+			var users = await CreateTestStore().WithFilter(nameof(User.FirstName), "Jared").GetAsync();
 
 			users.Should().HaveCount(1);
 			users.First().FamilyName.ShouldBeEquivalentTo("Pinchot");
@@ -46,7 +46,7 @@ namespace DapperDan.Tests.SQLServer
 
 			await deleteGetStore.DeleteAsync(newUser);
 
-			var users = await deleteGetStore.WithFilter(nameof(User.FirstName), "Omin").GetAsync<User>();
+			var users = await deleteGetStore.WithFilter(nameof(User.FirstName), "Omin").GetAsync();
 
 			users.Should().HaveCount(0);
 		}
@@ -56,7 +56,7 @@ namespace DapperDan.Tests.SQLServer
 		{
 			var store = CreateTestStore().WithFilter(nameof(User.FamilyName), "Darkmagic");
 
-			var users = await store.GetAsync<User>();
+			var users = await store.GetAsync();
 
 			users.Should().HaveCount(1);
 
@@ -68,7 +68,7 @@ namespace DapperDan.Tests.SQLServer
 
 			await store.UpdateAsync(jd);
 
-			users = await store.GetAsync<User>();
+			users = await store.GetAsync();
 
 			users.Should().HaveCount(1);
 			users.First().FirstName.ShouldBeEquivalentTo("James");
@@ -79,13 +79,13 @@ namespace DapperDan.Tests.SQLServer
 
 			await store.UpdateAsync(jd);
 
-			users = await store.GetAsync<User>();
+			users = await store.GetAsync();
 
 			users.Should().HaveCount(1);
 			users.First().FirstName.ShouldBeEquivalentTo("Jim");
 		}
 
-		private IEntityStore CreateTestStore() =>
-			new EntityStore().WithConfigConnection("Core").WithEntity<User>();
+		private EntityStore<User> CreateTestStore() =>
+			new EntityStore<User>().WithConfigConnection("Core");
 	}
 }
