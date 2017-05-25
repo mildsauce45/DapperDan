@@ -1,4 +1,6 @@
-﻿using System.Configuration;
+﻿using System;
+using System.Configuration;
+using DapperDan.Caching;
 using DapperDan.Filtering;
 using DapperDan.Utilities;
 
@@ -61,6 +63,27 @@ namespace DapperDan.EntityStores
 			ArgumentHelpers.ThrowIfNull(() => store);
 
 			store.PagingInfo.WithSkip(skip).WithTake(take);
+
+			return store;
+		}
+
+		public static EntityStore<TEntity> WithCache<TEntity, TCache>(this EntityStore<TEntity> store) where TCache : ICache
+		{
+			ArgumentHelpers.ThrowIfNull(() => store);
+
+			var cache = Activator.CreateInstance<TCache>();
+
+			return WithCache(store, cache);			
+		}
+
+		/// <summary>
+		/// Passing in null for cache will remove caching from this store
+		/// </summary>
+		public static EntityStore<TEntity> WithCache<TEntity>(this EntityStore<TEntity> store, ICache cache)
+		{
+			ArgumentHelpers.ThrowIfNull(() => store);
+
+			store.Cache = cache;
 
 			return store;
 		}

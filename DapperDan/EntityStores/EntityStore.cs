@@ -4,6 +4,7 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
 using Dapper;
+using DapperDan.Caching;
 using DapperDan.EntityStores.QueryExecution;
 using DapperDan.Filtering;
 using DapperDan.Utilities;
@@ -16,9 +17,14 @@ namespace DapperDan.EntityStores
 		internal PagingInfo PagingInfo { get; private set; }
 
 		internal IList<ColumnFilter> Filters { get; private set; }
+		internal ICache Cache { get; set; }
+
+		private Type entityType;
 
 		public EntityStore()
 		{
+			entityType = typeof(TEntity);
+
 			ConnectionInfo = new ConnectionInfo().WithEntity<TEntity>();
 			PagingInfo = new PagingInfo();
 
@@ -72,9 +78,16 @@ namespace DapperDan.EntityStores
 			if (result == null)
 				return default(TEntity);
 
-			this.WithFilter(ConnectionInfo.KeyColumnName, result.GetType().GetProperty(ConnectionInfo.KeyColumnName).GetValue(result));
+			object newKey = GetKey(result);
 
-			return (await GetAsync()).FirstOrDefault();
+			this.WithFilter(ConnectionInfo.KeyColumnName, newKey);
+
+			var newEntity = (await GetAsync()).FirstOrDefault();
+
+			if (Cache != null)
+				await Cache.Add(newKey, newEntity);
+
+			return newEntity;
 		}
 
 		public async Task<TEntity> UpdateAsync(TEntity toUpdate)
@@ -89,6 +102,9 @@ namespace DapperDan.EntityStores
 			using (var db = new SqlConnection(ConnectionInfo.ConnectionString))
 			{
 				await db.ExecuteAsync(sql, parameters);
+
+				if (Cache != null)
+					await Cache.Replace(GetKey(toUpdate), toUpdate);
 			}
 
 			return toUpdate;
@@ -113,10 +129,21 @@ namespace DapperDan.EntityStores
 			using (var db = new SqlConnection(ConnectionInfo.ConnectionString))
 			{
 				await db.ExecuteAsync(sql, parameters);
+
+				if (Cache != null)
+					await Cache.Remove(entityKey);
 			}
 		}
 
 		#endregion
+
+		public async Task<IEnumerable<TEntity>> Search(string searchTerm)
+		{
+			if (Cache == null)
+				return Enumerable.Empty<TEntity>();
+
+			return (await Cache.Search(searchTerm)).OfType<TEntity>();
+		}
 
 		#region Private Helpers
 
@@ -125,6 +152,10 @@ namespace DapperDan.EntityStores
 			if (ConnectionInfo == null || string.IsNullOrWhiteSpace(ConnectionInfo.ConnectionString))
 				throw new InvalidOperationException("Cannot connect to a database. No connection string provided");
 		}
+
+		private object GetKey(TEntity entity) =>
+			entityType.GetProperty(ConnectionInfo.KeyColumnName).GetValue(entity);
+
 
 		#endregion
 	}
